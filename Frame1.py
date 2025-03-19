@@ -1,11 +1,14 @@
 import tkinter as tk
 from components import TopFrameComponent
+from main import books
 
 
 class Frame1(tk.Frame):
     def __init__(self, parent, changeScreenFunction):
         super().__init__(parent)
         self.changeScreen = changeScreenFunction
+
+
 
         self.grid(column=0, row=0, padx=25, pady=25, sticky="NSEW")
         self.rowconfigure(0, weight=1)

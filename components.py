@@ -25,3 +25,7 @@ class TopFrameComponent(tk.Frame):
 
         self.titleLabel2.grid(row=0, column=1, sticky="NSEW")
         self.backBtn.grid(row=0, column=0, sticky="NEW")
+
+class BookFrame(tk.Frame):
+    def __init__(self, parent):
+        super().__init__(parent)

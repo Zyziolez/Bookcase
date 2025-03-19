@@ -1,6 +1,16 @@
 import tkinter as tk
 from Frame1 import Frame1
 from components import frames
+from mysql.connector import connection
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+MYSQL_USER= os.getenv('MYSQL_USER')
+MYSQL_PASSWORD=os.getenv('MYSQL_PASSWORD')
+MYSQL_HOST=os.getenv('MYSQL_HOST')
+MYSQL_DATABASE=os.getenv('MYSQL_DATABASE')
 
 colors = {
     "lightgreen": "#C1CFA1",
@@ -8,6 +18,7 @@ colors = {
     "brown" : "#B17F59",
     "beige": "#EDE8DC"
 }
+books =[]
 class MyOptionButton(tk.Button):
     def __init__(self, parent, buttonText, backgroundColor, rowConfiguration, representingFrame, changeScreen):
         super().__init__( parent)
@@ -49,8 +60,9 @@ class MenuFrame(tk.Frame):
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
+        self.getBooks()
 
-        self.title("Hello")
+        self.title("Bookcase")
         self.geometry("400x400")
         self.resizable(False, False)
         self.configure(background=colors["beige"])
@@ -72,6 +84,20 @@ class App(tk.Tk):
         elif frame == frames["skonczone"]:
             pass
 
+    def getBooks(self):
+        books = []
+        cnx = connection.MySQLConnection(
+            user=MYSQL_USER, password=MYSQL_PASSWORD,
+            host=MYSQL_HOST, database=MYSQL_DATABASE
+        )
+        cursor = cnx.cursor()
+        query = ("select * from book")
+        cursor.execute(query)
+
+        for book in cursor:
+            books.append(book)
+
+        cnx.close()
     def startApp(self):
         self.menuPage.tkraise()
         self.mainloop()
