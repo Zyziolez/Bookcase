@@ -1,6 +1,6 @@
 import tkinter as tk
 from Frame1 import Frame1
-from components import frames
+from components import frames, books
 from mysql.connector import connection
 import os
 from dotenv import load_dotenv
@@ -18,7 +18,7 @@ colors = {
     "brown" : "#B17F59",
     "beige": "#EDE8DC"
 }
-books =[]
+
 class MyOptionButton(tk.Button):
     def __init__(self, parent, buttonText, backgroundColor, rowConfiguration, representingFrame, changeScreen):
         super().__init__( parent)
@@ -70,7 +70,7 @@ class App(tk.Tk):
         self.rowconfigure(0, weight=1)
 
         self.menuPage = MenuFrame(self, self.changeScreen)
-        self.frame1 = Frame1(self, self.changeScreen)
+        self.frame1 = Frame1(self, self.changeScreen, self.refreshScreen)
 
     def changeScreen(self, frame):
 
@@ -85,7 +85,7 @@ class App(tk.Tk):
             pass
 
     def getBooks(self):
-        books = []
+        books.clear()
         cnx = connection.MySQLConnection(
             user=MYSQL_USER, password=MYSQL_PASSWORD,
             host=MYSQL_HOST, database=MYSQL_DATABASE
@@ -101,6 +101,9 @@ class App(tk.Tk):
     def startApp(self):
         self.menuPage.tkraise()
         self.mainloop()
+    def refreshScreen(self):
+        print("REFRESHING")
+        self.update_idletasks()
 
 
 app = App()
