@@ -1,16 +1,9 @@
 import tkinter as tk
 from Frame1 import Frame1
-from components import frames, books
+from Frame2 import Frame2
+from components import frames, mysqlData
 from mysql.connector import connection
-import os
-from dotenv import load_dotenv
 
-load_dotenv()
-
-MYSQL_USER= os.getenv('MYSQL_USER')
-MYSQL_PASSWORD=os.getenv('MYSQL_PASSWORD')
-MYSQL_HOST=os.getenv('MYSQL_HOST')
-MYSQL_DATABASE=os.getenv('MYSQL_DATABASE')
 
 colors = {
     "lightgreen": "#C1CFA1",
@@ -60,7 +53,6 @@ class MenuFrame(tk.Frame):
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.getBooks()
 
         self.title("Bookcase")
         self.geometry("400x400")
@@ -71,6 +63,7 @@ class App(tk.Tk):
 
         self.menuPage = MenuFrame(self, self.changeScreen)
         self.frame1 = Frame1(self, self.changeScreen, self.refreshScreen)
+        self.frame2 = Frame2(self, self.changeScreen, self.refreshScreen)
 
     def changeScreen(self, frame):
 
@@ -80,24 +73,10 @@ class App(tk.Tk):
             self.frame1.tkraise()
 
         elif frame == frames["w trakcie"]:
-            pass
+            self.frame2.tkraise()
         elif frame == frames["skonczone"]:
             pass
 
-    def getBooks(self):
-        books.clear()
-        cnx = connection.MySQLConnection(
-            user=MYSQL_USER, password=MYSQL_PASSWORD,
-            host=MYSQL_HOST, database=MYSQL_DATABASE
-        )
-        cursor = cnx.cursor()
-        query = ("select * from book")
-        cursor.execute(query)
-
-        for book in cursor:
-            books.append(book)
-
-        cnx.close()
     def startApp(self):
         self.menuPage.tkraise()
         self.mainloop()

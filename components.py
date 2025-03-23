@@ -5,13 +5,12 @@ from dotenv import load_dotenv
 
 
 load_dotenv()
-
-MYSQL_USER= os.getenv('MYSQL_USER')
-MYSQL_PASSWORD=os.getenv('MYSQL_PASSWORD')
-MYSQL_HOST=os.getenv('MYSQL_HOST')
-MYSQL_DATABASE=os.getenv('MYSQL_DATABASE')
-
-books =[]
+mysqlData = {
+"MYSQL_USER" : os.getenv('MYSQL_USER'),
+"MYSQL_PASSWORD":os.getenv('MYSQL_PASSWORD'),
+"MYSQL_HOST" : os.getenv('MYSQL_HOST'),
+"MYSQL_DATABASE": os.getenv('MYSQL_DATABASE')
+}
 
 frames = {
     "do przeczytania": "do_przeczytania",
@@ -40,37 +39,49 @@ class TopFrameComponent(tk.Frame):
         self.backBtn.grid(row=0, column=0, sticky="NEW")
 
 class BookListGenerator(tk.Frame):
-    def __init__(self, parent, refreshScreen):
+    def __init__(self, parent, refreshScreen, books, selectQuery):
         super().__init__(parent)
+        self.books = books
+        self.selectQuery = selectQuery
 
         self.booksListFrame = tk.Frame(self, background="orange")
         self.booksListFrame.pack(side=tk.TOP, expand=True,fill="both")
         self.currentPage = 1
-        self.booksChunks = [books[x:x + 7] for x in range(0, len(books), 7)]
+        self.booksChunks = [self.books[x:x + 7] for x in range(0, len(self.books), 7)]
         self.booksChunksLength = len(self.booksChunks)
 
-        pageChangeButtonsFrame = tk.Frame(self, height=30, background="green")
-        pageChangeButtonsFrame.pack(side=tk.BOTTOM, fill="x")
-        self.buttonBack = tk.Button(pageChangeButtonsFrame, text="<", state=tk.DISABLED, command=self.changePageBack)
-        pageLabel = tk.Label(pageChangeButtonsFrame, text=f"{self.currentPage}/{len(self.booksChunks)}")
-        self.buttonNext = tk.Button(pageChangeButtonsFrame, text=">", command=self.changePageNext)
+        if len(self.booksChunks) >= 1:
+            self.onePageBooksList(self.booksListFrame, self.booksChunks[0])
+            self.bottomPageInfo = f"{self.currentPage}/{len(self.booksChunks)}"
+        else:
+            self.noBooksLabel = tk.Label(self.booksListFrame, text="no books")
+            self.bottomPageInfo = f"{self.currentPage}/{1}"
+            self.noBooksLabel.pack()
 
-        pageChangeButtonsFrame.columnconfigure(0, weight=1)
-        pageChangeButtonsFrame.columnconfigure(1, weight=1)
-        pageChangeButtonsFrame.columnconfigure(2, weight=1)
-        pageChangeButtonsFrame.rowconfigure(0, weight=1)
-        self.buttonBack.grid(row=0, column=0)
-        pageLabel.grid(row=0, column=1)
-        self.buttonNext.grid(row=0, column=2)
 
-        self.onePageBooksList(self.booksListFrame, self.booksChunks[0])
+        self.pageChangeButtonsFrame = tk.Frame(parent, height=30, background="green")
+        self.pageChangeButtonsFrame.pack(side=tk.BOTTOM, fill="x")
+        self.bottomPageCounter(self.pageChangeButtonsFrame)
     def onePageBooksList(self, parent, onePageBookList):
         self.onePageFrame = tk.Frame(parent)
 
         for book in onePageBookList:
-            self.listedBook = BookFrame(parent, book[0],book[1],self.refreshScreen  )
+            self.listedBook = BookFrame(parent, book[0],book[1],self.refreshScreen, self.deleteBookFromList, self.selectQuery  )
             self.listedBook.pack(fill="x", pady=2.5)
         self.onePageFrame.pack()
+    def bottomPageCounter(self, parent):
+
+        self.buttonBack = tk.Button(parent, text="<", state=tk.DISABLED, command=self.changePageBack)
+        pageLabel = tk.Label(parent, text=self.bottomPageInfo)
+        self.buttonNext = tk.Button(parent, text=">", command=self.changePageNext)
+
+        parent.columnconfigure(0, weight=1)
+        parent.columnconfigure(1, weight=1)
+        parent.columnconfigure(2, weight=1)
+        parent.rowconfigure(0, weight=1)
+        self.buttonBack.grid(row=0, column=0)
+        pageLabel.grid(row=0, column=1)
+        self.buttonNext.grid(row=0, column=2)
 
     def changePageBack(self):
             if self.currentPage > 1:
@@ -80,7 +91,9 @@ class BookListGenerator(tk.Frame):
                 self.currentPage -=1
                 self.buttonBack.configure(state=tk.ACTIVE)
                 if self.currentPage < len(self.booksChunks):
-                    self.buttonNext.configure(state=tk.ACTIVE)
+                    self.buttonNext.configure(state="active")
+                else:
+                    self.buttonNext.configure(state="disabled")
                 if self.currentPage == 1:
                     self.buttonBack.configure(state="disabled")
                 self.onePageBooksList(self.booksListFrame, self.booksChunks[self.currentPage - 1])
@@ -99,22 +112,54 @@ class BookListGenerator(tk.Frame):
             self.onePageBooksList(self.booksListFrame, self.booksChunks[self.currentPage - 1])
 
     def refreshScreen(self):
-        self.booksChunks = [books[x:x + 7] for x in range(0, len(books), 7)]
-        self.onePageFrame.destroy()
-        for widget in self.booksListFrame.winfo_children():
-            widget.destroy()
-        self.onePageBooksList(self.booksListFrame, self.booksChunks[self.currentPage - 1])
+        self.booksChunks = [self.books[x:x + 7] for x in range(0, len(self.books), 7)]
         self.booksChunksLength = len(self.booksChunks)
 
+        if self.booksChunksLength < self.currentPage:
+            self.currentPage = self.booksChunksLength
+
+        # self.onePageFrame.destroy()
+        for widget in self.booksListFrame.winfo_children():
+            widget.destroy()
+        for widget in self.pageChangeButtonsFrame.winfo_children():
+            widget.destroy()
+
+        # for widget in
+        self.onePageBooksList(self.booksListFrame, self.booksChunks[self.currentPage - 1])
+        self.bottomPageInfo = f"{self.currentPage}/{self.booksChunksLength}"
+        self.bottomPageCounter(self.pageChangeButtonsFrame)
+    def deleteBookFromList(self, bookId, selectQuery):
+        cnx = connection.MySQLConnection(
+            user=mysqlData["MYSQL_USER"], password=mysqlData["MYSQL_PASSWORD"],
+            host=mysqlData["MYSQL_HOST"], database=mysqlData["MYSQL_DATABASE"]
+        )
+        cursor = cnx.cursor()
+        query = "DELETE FROM `book` WHERE `book`.`id` = %s"
+        query_data = (str(bookId))
+        cursor.execute(query, (query_data,))
+        cnx.commit()
+
+        query2 = selectQuery
+        cursor.execute(query2)
+
+        self.books.clear()
+        for i in cursor:
+            self.books.append(i)
+
+        self.refreshScreen()
+        cnx.close()
+
+
+
 class BookFrame(tk.Frame):
-    def __init__(self, parent, bookId, title, refreshScreen):
+    def __init__(self, parent, bookId, title, refreshScreen, deleteBookFromList, selectQuery):
         super().__init__(parent)
         self.bookId = bookId
         self.title = title
         self.refreshScreen = refreshScreen
 
         self.bookTitle = tk.Label(self, text=self.title, background="yellow")
-        self.deleteButton = tk.Button(self, text="Delete", background="red", command=self.deleteBookFromList)
+        self.deleteButton = tk.Button(self, text="Delete", background="red", command= lambda: deleteBookFromList(self.bookId, selectQuery))
 
         self.configure(height=40)
         self.columnconfigure(0, weight=1)
@@ -123,23 +168,3 @@ class BookFrame(tk.Frame):
 
         self.bookTitle.grid(row=0, column=0, sticky="NSW")
         self.deleteButton.grid(row=0, column=1, sticky="NSE")
-    def deleteBookFromList(self):
-        cnx = connection.MySQLConnection(
-            user=MYSQL_USER, password=MYSQL_PASSWORD,
-            host=MYSQL_HOST, database=MYSQL_DATABASE
-        )
-        cursor = cnx.cursor()
-        query = "DELETE FROM `book` WHERE `book`.`id` = %s"
-        query_data = (str(self.bookId))
-        cursor.execute(query, (query_data,))
-        cnx.commit()
-
-        query2 = ("select * from book")
-        cursor.execute(query2)
-
-        books.clear()
-        for i in cursor:
-            books.append(i)
-
-        self.refreshScreen()
-        cnx.close()
