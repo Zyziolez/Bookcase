@@ -18,6 +18,10 @@ frames = {
     "skonczone": "skonczone",
     "menu": "menu"
 }
+actions = {
+    "delete" : "delete",
+    "mark_as_reading": ""
+}
 class BackButton(tk.Button):
     def __init__(self,parent, changeFrame):
         super().__init__(parent)
@@ -39,7 +43,7 @@ class TopFrameComponent(tk.Frame):
         self.backBtn.grid(row=0, column=0, sticky="NEW")
 
 class BookListGenerator(tk.Frame):
-    def __init__(self, parent, refreshScreen, books, selectQuery):
+    def __init__(self, parent, books, selectQuery):
         super().__init__(parent)
         self.books = books
         self.selectQuery = selectQuery
@@ -49,6 +53,7 @@ class BookListGenerator(tk.Frame):
         self.currentPage = 1
         self.booksChunks = [self.books[x:x + 7] for x in range(0, len(self.books), 7)]
         self.booksChunksLength = len(self.booksChunks)
+
 
         if len(self.booksChunks) >= 1:
             self.onePageBooksList(self.booksListFrame, self.booksChunks[0])
@@ -66,7 +71,8 @@ class BookListGenerator(tk.Frame):
         self.onePageFrame = tk.Frame(parent)
 
         for book in onePageBookList:
-            self.listedBook = BookFrame(parent, book[0],book[1],self.refreshScreen, self.deleteBookFromList, self.selectQuery  )
+            # self.listedBook = BookFrame(parent, book[0],book[1],self.refreshScreen, self.bookActionFunction, self.selectQuery  )
+            self.listedBook = BookFrame(parent, book[0], book[1], self.bookActionFunction, "test")
             self.listedBook.pack(fill="x", pady=2.5)
         self.onePageFrame.pack()
     def bottomPageCounter(self, parent):
@@ -128,43 +134,47 @@ class BookListGenerator(tk.Frame):
         self.onePageBooksList(self.booksListFrame, self.booksChunks[self.currentPage - 1])
         self.bottomPageInfo = f"{self.currentPage}/{self.booksChunksLength}"
         self.bottomPageCounter(self.pageChangeButtonsFrame)
-    def deleteBookFromList(self, bookId, selectQuery):
+    def bookActionFunction(self, bookId, actionName):
         cnx = connection.MySQLConnection(
             user=mysqlData["MYSQL_USER"], password=mysqlData["MYSQL_PASSWORD"],
             host=mysqlData["MYSQL_HOST"], database=mysqlData["MYSQL_DATABASE"]
         )
         cursor = cnx.cursor()
-        query = "DELETE FROM `book` WHERE `book`.`id` = %s"
-        query_data = (str(bookId))
-        cursor.execute(query, (query_data,))
-        cnx.commit()
 
-        query2 = selectQuery
-        cursor.execute(query2)
+        if actionName == "delete":
+            query = "DELETE FROM `book` WHERE `book`.`id` = %s"
+            query_data = (str(bookId))
+            cursor.execute(query, (query_data,))
+            cnx.commit()
 
-        self.books.clear()
-        for i in cursor:
-            self.books.append(i)
+            query2 = self.selectQuery
+            cursor.execute(query2)
+
+            self.books.clear()
+            for i in cursor:
+                self.books.append(i)
+        else:
+            print(actionName)
 
         self.refreshScreen()
         cnx.close()
 
 
 
+
 class BookFrame(tk.Frame):
-    def __init__(self, parent, bookId, title, refreshScreen, deleteBookFromList, selectQuery):
+
+    def __init__(self, parent, bookId, title, bookActionFunction,  actionName):
         super().__init__(parent)
         self.bookId = bookId
         self.title = title
-        self.refreshScreen = refreshScreen
 
         self.bookTitle = tk.Label(self, text=self.title, background="yellow")
-        self.deleteButton = tk.Button(self, text="Delete", background="red", command= lambda: deleteBookFromList(self.bookId, selectQuery))
+        self.deleteButton = tk.Button(self, text="Delete", background="red", command= lambda: bookActionFunction(self.bookId, "delete"))
+        self.actionButton = tk.Button(self, text=actionName, background="blue", command=lambda: bookActionFunction(self.bookId, actionName))
 
         self.configure(height=40)
-        self.columnconfigure(0, weight=1)
-        self.columnconfigure(1, weight=5)
-        self.rowconfigure(0,weight=1)
 
-        self.bookTitle.grid(row=0, column=0, sticky="NSW")
-        self.deleteButton.grid(row=0, column=1, sticky="NSE")
+        self.bookTitle.pack(side=tk.LEFT)
+        self.deleteButton.pack(side=tk.RIGHT)
+        self.actionButton.pack(side=tk.RIGHT)

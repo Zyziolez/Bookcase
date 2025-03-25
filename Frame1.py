@@ -5,16 +5,13 @@ from datetime import datetime
 import asyncio
 
 class Frame1(tk.Frame):
-    def __init__(self, parent, changeScreenFunction, refreshScreen):
+    def __init__(self, parent, changeScreenFunction):
         super().__init__(parent)
         self.changeScreen = changeScreenFunction
         self.books = []
 
 
         self.grid(column=0, row=0, padx=25, pady=25, sticky="NSEW")
-        self.rowconfigure(0, weight=1)
-        self.rowconfigure(1, weight=1)
-        self.columnconfigure(0, weight=1)
 
 
         self.upFrame = TopFrameComponent(self, changeScreenFunction)
@@ -29,10 +26,9 @@ class Frame1(tk.Frame):
         self.entryInput.grid(row=0, column=0, sticky="NSEW")
         self.submitButton.grid(row=0, column=1, sticky="EW")
 
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(self.getBooks())
-        loop.close()
-        self.generator = BookListGenerator(self, refreshScreen, self.books, "select * from book where reading_status = 'not-started'")
+        asyncio.run(self.getBooks())
+
+        self.generator = BookListGenerator(self, self.books, "select * from book where reading_status = 'not-started'")
 
         self.upFrame.pack(fill="x")
         self.inputFrame.pack(fill="x", pady=20, padx=20)

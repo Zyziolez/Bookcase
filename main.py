@@ -62,27 +62,26 @@ class App(tk.Tk):
         self.rowconfigure(0, weight=1)
 
         self.menuPage = MenuFrame(self, self.changeScreen)
-        self.frame1 = Frame1(self, self.changeScreen, self.refreshScreen)
-        self.frame2 = Frame2(self, self.changeScreen, self.refreshScreen)
+        self.frame1 = Frame1(self, self.changeScreen)
+        self.frame2 = Frame2(self, self.changeScreen)
 
     def changeScreen(self, frame):
 
         if frame == frames["menu"]:
             self.menuPage.tkraise()
+            self.menuPage.grid(row=0, column=0)
         elif frame == frames["do przeczytania"]:
             self.frame1.tkraise()
-
+            self.frame1.grid(row=0, column=0)
         elif frame == frames["w trakcie"]:
             self.frame2.tkraise()
+            self.frame2.grid(row=0, column=0)
         elif frame == frames["skonczone"]:
             pass
 
     def startApp(self):
         self.menuPage.tkraise()
         self.mainloop()
-    def refreshScreen(self):
-        print("REFRESHING")
-        self.update_idletasks()
 
 
 app = App()
