@@ -1,11 +1,8 @@
 import tkinter as tk
 from Frame1 import Frame1
 from Frame2 import Frame2
+from Frame3 import Frame3
 from components import frames, colors
-from mysql.connector import connection
-
-
-
 
 class MyOptionButton(tk.Button):
     def __init__(self, parent, buttonText, backgroundColor, rowConfiguration, representingFrame, changeScreen):
@@ -15,8 +12,6 @@ class MyOptionButton(tk.Button):
         self.configure(text=f"{buttonText}", bg=f"{backgroundColor}", height=4, command=self.changeFrame, foreground="white")
         self.grid(column=0, row=rowConfiguration, sticky="EW")
     def changeFrame(self):
-        #print('changeing frame to ' + str(self.representingFrame))
-        # app.changeScreen(frames["do przeczytania"])
         self.changeScreen(self.representingFrame)
 
 class MenuFrame(tk.Frame):
@@ -59,22 +54,26 @@ class App(tk.Tk):
         self.menuPage = MenuFrame(self, self.changeScreen)
         self.frame1 = Frame1(self, self.changeScreen)
         self.frame2 = Frame2(self, self.changeScreen)
+        self.frame3 = Frame3(self, self.changeScreen)
 
     def changeScreen(self, frame):
 
         if frame == frames["menu"]:
             self.menuPage.tkraise()
             self.menuPage.grid(row=0, column=0)
-            self.frame2.destroy()
         elif frame == frames["do przeczytania"]:
             self.frame1.grid(row=0, column=0)
             self.frame1.tkraise()
+            self.frame2.destroy()
         elif frame == frames["w trakcie"]:
             self.frame2 = Frame2(self, self.changeScreen)
             self.frame2.grid(row=0, column=0)
             self.frame2.tkraise()
+            self.frame3.destroy()
         elif frame == frames["skonczone"]:
-            pass
+            self.frame3 = Frame3(self, self.changeScreen)
+            self.frame3.grid(row=0, column=0)
+            self.frame3.tkraise()
 
     def startApp(self):
         self.menuPage.tkraise()

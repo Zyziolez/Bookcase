@@ -21,7 +21,8 @@ frames = {
 actionsNames = {
     "delete" : "Usuń",
     "mark_as_reading": "Czytaj",
-    "finish_book": "Przeczytana"
+    "finish_book": "Przeczytana",
+    "rate_book": "Oceń"
 
 }
 colors = {
@@ -139,8 +140,12 @@ class BookListGenerator(tk.Frame):
         for widget in self.pageChangeButtonsFrame.winfo_children():
             widget.destroy()
 
-        # for widget in
-        self.onePageBooksList(self.booksListFrame, self.booksChunks[self.currentPage - 1])
+
+        if len(self.booksChunks) > 0:
+            self.onePageBooksList(self.booksListFrame, self.booksChunks[self.currentPage - 1])
+        else:
+            print("????")
+
         self.bottomPageInfo = f"{self.currentPage}/{self.booksChunksLength}"
         self.bottomPageCounter(self.pageChangeButtonsFrame)
     def bookActionFunction(self, bookId, actionName):
@@ -174,6 +179,22 @@ class BookListGenerator(tk.Frame):
             self.books.clear()
             for i in cursor:
                 self.books.append(i)
+        elif actionName == actionsNames["finish_book"]:
+            query = "UPDATE book SET reading_status = 'finished' WHERE book.id = %s"
+            query_data = (str(bookId))
+            cursor.execute(query, (query_data,))
+            cnx.commit()
+
+            query2 = self.selectQuery
+            cursor.execute(query2)
+
+            self.books.clear()
+            for i in cursor:
+                self.books.append(i)
+        elif actionName == actionsNames["rate_book"]:
+            self.ratePupUp = tk.Frame(self, width=100, height=100, background="pink")
+            rateLabel = tk.Label(self.ratePupUp, text="")
+            self.ratePupUp.pack(anchor="center")
 
         self.refreshScreen()
         cnx.close()
@@ -184,6 +205,7 @@ class BookListGenerator(tk.Frame):
 class BookFrame(tk.Frame):
 
     def __init__(self, parent, bookId, title, bookActionFunction,  actionName):
+        print(actionName)
         super().__init__(parent)
         self.bookId = bookId
         self.title = title
