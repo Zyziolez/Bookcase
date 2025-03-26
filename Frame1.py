@@ -1,5 +1,5 @@
 import tkinter as tk
-from components import TopFrameComponent, BookListGenerator, mysqlData
+from components import TopFrameComponent, BookListGenerator, mysqlData, actionsNames, colors
 from mysql.connector import connection
 from datetime import datetime
 import asyncio
@@ -14,9 +14,9 @@ class Frame1(tk.Frame):
         self.grid(column=0, row=0, padx=25, pady=25, sticky="NSEW")
 
 
-        self.upFrame = TopFrameComponent(self, changeScreenFunction)
+        self.upFrame = TopFrameComponent(self, changeScreenFunction, "Do przeczytania")
 
-        self.inputFrame = tk.Frame(self, background="green", height=40)
+        self.inputFrame = tk.Frame(self, height=40)
         self.inputFrame.columnconfigure(0, weight=5)
         self.inputFrame.columnconfigure(1, weight=1)
         self.inputFrame.rowconfigure(0, weight=1)
@@ -28,7 +28,7 @@ class Frame1(tk.Frame):
 
         asyncio.run(self.getBooks())
 
-        self.generator = BookListGenerator(self, self.books, "select * from book where reading_status = 'not-started'")
+        self.generator = BookListGenerator(self, self.books, "select * from book where reading_status = 'not-started'", actionsNames["mark_as_reading"])
 
         self.upFrame.pack(fill="x")
         self.inputFrame.pack(fill="x", pady=20, padx=20)

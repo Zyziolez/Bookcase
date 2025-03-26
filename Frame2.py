@@ -1,6 +1,6 @@
 import asyncio
 import tkinter as tk
-from components import mysqlData, BookListGenerator, TopFrameComponent
+from components import mysqlData, BookListGenerator, TopFrameComponent, actionsNames
 from mysql.connector import connection
 class Frame2(tk.Frame):
     def __init__ (self, parent, changeScreenFunction):
@@ -9,13 +9,13 @@ class Frame2(tk.Frame):
         self.books = []
         self.grid(column=0, row=0, padx=25, pady=25, sticky="NSEW")
 
-        self.upFrame = TopFrameComponent(self, changeScreenFunction)
+        self.upFrame = TopFrameComponent(self, changeScreenFunction, "W trakcie czytania")
 
         self.configure(background="blue")
         asyncio.run(self.getBooks2())
 
         self.generator = BookListGenerator(self, self.books,
-                                           "select * from book where reading_status = 'in-progress'")
+                                           "select * from book where reading_status = 'in-progress'", actionsNames["finish_book"])
         self.upFrame.pack(fill="x")
         self.generator.pack(expand=True, fill="both")
     async def getBooks2(self):
@@ -32,3 +32,8 @@ class Frame2(tk.Frame):
 
         cnx.close()
         return None
+    def refreshFrame (self):
+        for widget in self.generator.winfo_children():
+            widget.destroy()
+        self.generator =  BookListGenerator(self, self.books,
+                                           "select * from book where reading_status = 'in-progress'", actionsNames["finish_book"])

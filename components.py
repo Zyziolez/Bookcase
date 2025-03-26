@@ -18,37 +18,46 @@ frames = {
     "skonczone": "skonczone",
     "menu": "menu"
 }
-actions = {
-    "delete" : "delete",
-    "mark_as_reading": ""
+actionsNames = {
+    "delete" : "Usuń",
+    "mark_as_reading": "Czytaj",
+    "finish_book": "Przeczytana"
+
+}
+colors = {
+    "lightgreen": "#C1CFA1",
+    "darkgreen" : "#A5B68D",
+    "brown" : "#B17F59",
+    "beige": "#EDE8DC"
 }
 class BackButton(tk.Button):
     def __init__(self,parent, changeFrame):
         super().__init__(parent)
         self.changeFrame = changeFrame
-        self.configure(text="<", command=self.goToMenu)
+        self.configure(text="<", command=self.goToMenu, background=colors["beige"])
     def goToMenu(self):
         self.changeFrame(frames["menu"])
 
 class TopFrameComponent(tk.Frame):
-    def __init__(self, parent, changeScreenFunction):
+    def __init__(self, parent, changeScreenFunction, screenName):
         super().__init__(parent)
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=5)
 
-        self.titleLabel2 = tk.Label(self, text="frame1", fg="red", bg="pink")
+        self.titleLabel2 = tk.Label(self, text=screenName, bg=colors["beige"], fg=colors["brown"])
         self.backBtn = BackButton(self, changeScreenFunction)
 
         self.titleLabel2.grid(row=0, column=1, sticky="NSEW")
         self.backBtn.grid(row=0, column=0, sticky="NEW")
 
 class BookListGenerator(tk.Frame):
-    def __init__(self, parent, books, selectQuery):
+    def __init__(self, parent, books, selectQuery, actionName):
         super().__init__(parent)
         self.books = books
         self.selectQuery = selectQuery
+        self.actionName = actionName
 
-        self.booksListFrame = tk.Frame(self, background="orange")
+        self.booksListFrame = tk.Frame(self, background=colors["beige"])
         self.booksListFrame.pack(side=tk.TOP, expand=True,fill="both")
         self.currentPage = 1
         self.booksChunks = [self.books[x:x + 7] for x in range(0, len(self.books), 7)]
@@ -64,7 +73,7 @@ class BookListGenerator(tk.Frame):
             self.noBooksLabel.pack()
 
 
-        self.pageChangeButtonsFrame = tk.Frame(parent, height=30, background="green")
+        self.pageChangeButtonsFrame = tk.Frame(parent, height=30, background=colors["brown"])
         self.pageChangeButtonsFrame.pack(side=tk.BOTTOM, fill="x")
         self.bottomPageCounter(self.pageChangeButtonsFrame)
     def onePageBooksList(self, parent, onePageBookList):
@@ -72,7 +81,7 @@ class BookListGenerator(tk.Frame):
 
         for book in onePageBookList:
             # self.listedBook = BookFrame(parent, book[0],book[1],self.refreshScreen, self.bookActionFunction, self.selectQuery  )
-            self.listedBook = BookFrame(parent, book[0], book[1], self.bookActionFunction, "test")
+            self.listedBook = BookFrame(parent, book[0], book[1], self.bookActionFunction, self.actionName)
             self.listedBook.pack(fill="x", pady=2.5)
         self.onePageFrame.pack()
     def bottomPageCounter(self, parent):
@@ -141,7 +150,7 @@ class BookListGenerator(tk.Frame):
         )
         cursor = cnx.cursor()
 
-        if actionName == "delete":
+        if actionName == actionsNames["delete"]:
             query = "DELETE FROM `book` WHERE `book`.`id` = %s"
             query_data = (str(bookId))
             cursor.execute(query, (query_data,))
@@ -153,8 +162,18 @@ class BookListGenerator(tk.Frame):
             self.books.clear()
             for i in cursor:
                 self.books.append(i)
-        else:
-            print(actionName)
+        elif actionName == actionsNames["mark_as_reading"] :
+            query = "UPDATE book SET reading_status = 'in-progress' WHERE book.id = %s"
+            query_data = (str(bookId))
+            cursor.execute(query, (query_data,))
+            cnx.commit()
+
+            query2 = self.selectQuery
+            cursor.execute(query2)
+
+            self.books.clear()
+            for i in cursor:
+                self.books.append(i)
 
         self.refreshScreen()
         cnx.close()
@@ -169,11 +188,11 @@ class BookFrame(tk.Frame):
         self.bookId = bookId
         self.title = title
 
-        self.bookTitle = tk.Label(self, text=self.title, background="yellow")
-        self.deleteButton = tk.Button(self, text="Delete", background="red", command= lambda: bookActionFunction(self.bookId, "delete"))
-        self.actionButton = tk.Button(self, text=actionName, background="blue", command=lambda: bookActionFunction(self.bookId, actionName))
+        self.bookTitle = tk.Label(self, text=self.title)
+        self.deleteButton = tk.Button(self, text=actionsNames["delete"], background="red", command= lambda: bookActionFunction(self.bookId, actionsNames["delete"]))
+        self.actionButton = tk.Button(self, text=actionName, background=colors["lightgreen"], command=lambda: bookActionFunction(self.bookId, actionName))
 
-        self.configure(height=40)
+        self.configure(height=40, background=colors["beige"])
 
         self.bookTitle.pack(side=tk.LEFT)
         self.deleteButton.pack(side=tk.RIGHT)

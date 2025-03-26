@@ -1,16 +1,11 @@
 import tkinter as tk
 from Frame1 import Frame1
 from Frame2 import Frame2
-from components import frames, mysqlData
+from components import frames, colors
 from mysql.connector import connection
 
 
-colors = {
-    "lightgreen": "#C1CFA1",
-    "darkgreen" : "#A5B68D",
-    "brown" : "#B17F59",
-    "beige": "#EDE8DC"
-}
+
 
 class MyOptionButton(tk.Button):
     def __init__(self, parent, buttonText, backgroundColor, rowConfiguration, representingFrame, changeScreen):
@@ -70,12 +65,14 @@ class App(tk.Tk):
         if frame == frames["menu"]:
             self.menuPage.tkraise()
             self.menuPage.grid(row=0, column=0)
+            self.frame2.destroy()
         elif frame == frames["do przeczytania"]:
-            self.frame1.tkraise()
             self.frame1.grid(row=0, column=0)
+            self.frame1.tkraise()
         elif frame == frames["w trakcie"]:
-            self.frame2.tkraise()
+            self.frame2 = Frame2(self, self.changeScreen)
             self.frame2.grid(row=0, column=0)
+            self.frame2.tkraise()
         elif frame == frames["skonczone"]:
             pass
 
