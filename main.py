@@ -2,7 +2,7 @@ import tkinter as tk
 from Frame1 import Frame1
 from Frame2 import Frame2
 from Frame3 import Frame3
-from components import frames, colors
+from data import frames, colors
 
 class MyOptionButton(tk.Button):
     def __init__(self, parent, buttonText, backgroundColor, rowConfiguration, representingFrame, changeScreen):

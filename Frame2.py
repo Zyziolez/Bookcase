@@ -1,7 +1,8 @@
 import asyncio
 import tkinter as tk
-from components import mysqlData, BookListGenerator, TopFrameComponent, actionsNames
+from components import BookListGenerator, TopFrameComponent
 from mysql.connector import connection
+from data import mysqlData, actionsNames
 class Frame2(tk.Frame):
     def __init__ (self, parent, changeScreenFunction):
         super().__init__(parent)
@@ -11,7 +12,6 @@ class Frame2(tk.Frame):
 
         self.upFrame = TopFrameComponent(self, changeScreenFunction, "W trakcie czytania")
 
-        self.configure(background="blue")
         asyncio.run(self.getBooks2())
 
         self.generator = BookListGenerator(self, self.books,

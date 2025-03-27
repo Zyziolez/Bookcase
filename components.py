@@ -1,36 +1,9 @@
+import asyncio
 import tkinter as tk
 from mysql.connector import connection
-import os
-from dotenv import load_dotenv
+from data import frames, mysqlData, colors, actionsNames
+from tkinter import simpledialog
 
-
-load_dotenv()
-mysqlData = {
-"MYSQL_USER" : os.getenv('MYSQL_USER'),
-"MYSQL_PASSWORD":os.getenv('MYSQL_PASSWORD'),
-"MYSQL_HOST" : os.getenv('MYSQL_HOST'),
-"MYSQL_DATABASE": os.getenv('MYSQL_DATABASE')
-}
-
-frames = {
-    "do przeczytania": "do_przeczytania",
-    "w trakcie": "w_trakcie",
-    "skonczone": "skonczone",
-    "menu": "menu"
-}
-actionsNames = {
-    "delete" : "Usuń",
-    "mark_as_reading": "Czytaj",
-    "finish_book": "Przeczytana",
-    "rate_book": "Oceń"
-
-}
-colors = {
-    "lightgreen": "#C1CFA1",
-    "darkgreen" : "#A5B68D",
-    "brown" : "#B17F59",
-    "beige": "#EDE8DC"
-}
 class BackButton(tk.Button):
     def __init__(self,parent, changeFrame):
         super().__init__(parent)
@@ -82,7 +55,7 @@ class BookListGenerator(tk.Frame):
 
         for book in onePageBookList:
             # self.listedBook = BookFrame(parent, book[0],book[1],self.refreshScreen, self.bookActionFunction, self.selectQuery  )
-            self.listedBook = BookFrame(parent, book[0], book[1], self.bookActionFunction, self.actionName)
+            self.listedBook = BookFrame(parent, book[0], book[1], book[3], self.bookActionFunction, self.actionName)
             self.listedBook.pack(fill="x", pady=2.5)
         self.onePageFrame.pack()
     def bottomPageCounter(self, parent):
@@ -156,8 +129,12 @@ class BookListGenerator(tk.Frame):
         cursor = cnx.cursor()
 
         if actionName == actionsNames["delete"]:
-            query = "DELETE FROM `book` WHERE `book`.`id` = %s"
             query_data = (str(bookId))
+            deleteReview = "DELETE FROM `book_review` WHERE `book_review`.`bookID` = %s"
+
+            query = "DELETE FROM `book` WHERE `book`.`id` = %s"
+            cursor.execute(deleteReview, (query_data,))
+            cnx.commit()
             cursor.execute(query, (query_data,))
             cnx.commit()
 
@@ -192,9 +169,11 @@ class BookListGenerator(tk.Frame):
             for i in cursor:
                 self.books.append(i)
         elif actionName == actionsNames["rate_book"]:
-            self.ratePupUp = tk.Frame(self, width=100, height=100, background="pink")
-            rateLabel = tk.Label(self.ratePupUp, text="")
-            self.ratePupUp.pack(anchor="center")
+            ratingAnswer = simpledialog.askinteger("Input","How do you rate the book?", parent=self, minvalue=0, maxvalue=10)
+            query = "INSERT INTO `book_review`(`id`, `rating`, `content`, `bookID`) VALUES (null,%s,'',%s)"
+            query_data = (str(ratingAnswer), str(bookId))
+            cursor.execute(query, query_data)
+            cnx.commit()
 
         self.refreshScreen()
         cnx.close()
@@ -204,18 +183,40 @@ class BookListGenerator(tk.Frame):
 
 class BookFrame(tk.Frame):
 
-    def __init__(self, parent, bookId, title, bookActionFunction,  actionName):
-        print(actionName)
+    def __init__(self, parent, bookId, title, readingStatus, bookActionFunction,  actionName):
         super().__init__(parent)
         self.bookId = bookId
         self.title = title
+        self.rating = None
+
+        if readingStatus == "finished":
+            asyncio.run(self.getRating())
 
         self.bookTitle = tk.Label(self, text=self.title)
-        self.deleteButton = tk.Button(self, text=actionsNames["delete"], background="red", command= lambda: bookActionFunction(self.bookId, actionsNames["delete"]))
+        self.deleteButton = tk.Button(self, text=actionsNames["delete"], background="red",
+                                      command= lambda: bookActionFunction(self.bookId, actionsNames["delete"]) )
         self.actionButton = tk.Button(self, text=actionName, background=colors["lightgreen"], command=lambda: bookActionFunction(self.bookId, actionName))
 
+        if self.rating != None:
+            self.actionButton.configure(state="disabled")
+            self.bookTitle.configure(text=f"{self.rating}/10 - {self.title}")
         self.configure(height=40, background=colors["beige"])
 
         self.bookTitle.pack(side=tk.LEFT)
         self.deleteButton.pack(side=tk.RIGHT)
         self.actionButton.pack(side=tk.RIGHT)
+    async def getRating(self):
+        cnx = connection.MySQLConnection(
+            user=mysqlData["MYSQL_USER"], password=mysqlData["MYSQL_PASSWORD"],
+            host=mysqlData["MYSQL_HOST"], database=mysqlData["MYSQL_DATABASE"]
+        )
+        cursor = cnx.cursor()
+        query2 = ("select * from book_review where bookID = %s")
+        queryData = (self.bookId)
+        cursor.execute(query2, (queryData,))
+
+        for i in cursor:
+            self.rating = i[1]
+
+        cnx.close()
+
