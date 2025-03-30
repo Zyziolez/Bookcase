@@ -9,7 +9,7 @@ class MyOptionButton(tk.Button):
         super().__init__( parent)
         self.changeScreen = changeScreen
         self.representingFrame = representingFrame
-        self.configure(text=f"{buttonText}", bg=f"{backgroundColor}", height=4, command=self.changeFrame, foreground="white")
+        self.configure(text=f"{buttonText}", bg=f"{backgroundColor}", height=3, command=self.changeFrame, foreground="white", font=("Outfit", 12), bd=0)
         self.grid(column=0, row=rowConfiguration, sticky="EW")
     def changeFrame(self):
         self.changeScreen(self.representingFrame)
@@ -20,15 +20,16 @@ class MenuFrame(tk.Frame):
         self.changeScreen = changeScreenFunction
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
+        self.configure(background=colors["beige"])
 
-        self.titleLabel = tk.Label(self, text="BIBLIOTECZKA", fg=colors["brown"])
+        self.titleLabel = tk.Label(self, text="BIBLIOTECZKA", fg=colors["brown"], font=("Outfit", 20), background=colors["beige"])
         self.titleLabel.grid(column=0, row=0)
 
-        self.btn1 = MyOptionButton(self, "hello", colors["lightgreen"], 1, frames["do przeczytania"], self.changeScreen)
+        self.btn1 = MyOptionButton(self, "Do przeczytania", colors["lightgreen"], 1, frames["do przeczytania"], self.changeScreen)
 
-        self.btn2 = MyOptionButton(self, "world", colors["darkgreen"], 2, frames["w trakcie"], self.changeScreen)
+        self.btn2 = MyOptionButton(self, "W trakcie", colors["darkgreen"], 2, frames["w trakcie"], self.changeScreen)
 
-        self.btn2 = MyOptionButton(self, "how are you", colors["brown"], 3, frames["skonczone"], self.changeScreen)
+        self.btn2 = MyOptionButton(self, "Skończone", colors["brown"], 3, frames["skonczone"], self.changeScreen)
 
         self.rowconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)

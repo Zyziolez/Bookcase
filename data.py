@@ -27,5 +27,8 @@ colors = {
     "lightgreen": "#C1CFA1",
     "darkgreen" : "#A5B68D",
     "brown" : "#B17F59",
-    "beige": "#EDE8DC"
+    "beige": "#EDE8DC",
+    "green": "#92E285",
+    "red": "#DF7676",
+    "darkbeige": "#E5DECF"
 }

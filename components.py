@@ -8,7 +8,7 @@ class BackButton(tk.Button):
     def __init__(self,parent, changeFrame):
         super().__init__(parent)
         self.changeFrame = changeFrame
-        self.configure(text="<", command=self.goToMenu, background=colors["beige"])
+        self.configure(text="<", command=self.goToMenu, background=colors["beige"], bd=0, foreground=colors["brown"], font=("Outfit", 12, "bold"))
     def goToMenu(self):
         self.changeFrame(frames["menu"])
 
@@ -18,11 +18,11 @@ class TopFrameComponent(tk.Frame):
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=5)
 
-        self.titleLabel2 = tk.Label(self, text=screenName, bg=colors["beige"], fg=colors["brown"])
+        self.titleLabel2 = tk.Label(self, text=screenName, bg=colors["beige"], fg=colors["brown"], font=("Outfit", 12))
         self.backBtn = BackButton(self, changeScreenFunction)
 
         self.titleLabel2.grid(row=0, column=1, sticky="NSEW")
-        self.backBtn.grid(row=0, column=0, sticky="NEW")
+        self.backBtn.grid(row=0, column=0, sticky="NSEW")
 
 class BookListGenerator(tk.Frame):
     def __init__(self, parent, books, selectQuery, actionName):
@@ -34,7 +34,8 @@ class BookListGenerator(tk.Frame):
         self.booksListFrame = tk.Frame(self, background=colors["beige"])
         self.booksListFrame.pack(side=tk.TOP, expand=True,fill="both")
         self.currentPage = 1
-        self.booksChunks = [self.books[x:x + 7] for x in range(0, len(self.books), 7)]
+        self.booksMax = lambda: 7 if actionName == actionsNames["mark_as_reading"] else 9
+        self.booksChunks = [self.books[x:x + self.booksMax()] for x in range(0, len(self.books), self.booksMax())]
         self.booksChunksLength = len(self.booksChunks)
 
 
@@ -47,7 +48,7 @@ class BookListGenerator(tk.Frame):
             self.noBooksLabel.pack()
 
 
-        self.pageChangeButtonsFrame = tk.Frame(parent, height=30, background=colors["brown"])
+        self.pageChangeButtonsFrame = tk.Frame(parent, height=30, background=colors["beige"])
         self.pageChangeButtonsFrame.pack(side=tk.BOTTOM, fill="x")
         self.bottomPageCounter(self.pageChangeButtonsFrame)
     def onePageBooksList(self, parent, onePageBookList):
@@ -60,9 +61,9 @@ class BookListGenerator(tk.Frame):
         self.onePageFrame.pack()
     def bottomPageCounter(self, parent):
 
-        self.buttonBack = tk.Button(parent, text="<", state=tk.DISABLED, command=self.changePageBack)
-        pageLabel = tk.Label(parent, text=self.bottomPageInfo)
-        self.buttonNext = tk.Button(parent, text=">", command=self.changePageNext)
+        self.buttonBack = tk.Button(parent, text="<", state=tk.DISABLED, background=colors["beige"], command=self.changePageBack, bd=0, font=("Outfit", 12, "bold"))
+        pageLabel = tk.Label(parent, text=self.bottomPageInfo, background=colors["beige"], font=("Outfit", 12))
+        self.buttonNext = tk.Button(parent, text=">",  command=self.changePageNext, background=colors["beige"], bd=0, font=("Outfit", 12, "bold"))
 
         parent.columnconfigure(0, weight=1)
         parent.columnconfigure(1, weight=1)
@@ -74,35 +75,21 @@ class BookListGenerator(tk.Frame):
 
     def changePageBack(self):
             if self.currentPage > 1:
-                self.onePageFrame.destroy()
-                for widget in self.booksListFrame.winfo_children():
-                    widget.destroy()
-                self.currentPage -=1
-                self.buttonBack.configure(state=tk.ACTIVE)
-                if self.currentPage < len(self.booksChunks):
-                    self.buttonNext.configure(state="active")
-                else:
-                    self.buttonNext.configure(state="disabled")
-                if self.currentPage == 1:
-                    self.buttonBack.configure(state="disabled")
-                self.onePageBooksList(self.booksListFrame, self.booksChunks[self.currentPage - 1])
+                self.currentPage -= 1
+                self.refreshScreen()
+
     def changePageNext(self):
         if self.currentPage < len(self.booksChunks):
             self.currentPage += 1
-            self.onePageFrame.destroy()
-            for widget in self.booksListFrame.winfo_children():
-                widget.destroy()
-            if self.currentPage > 1:
-                self.buttonBack.configure(state="active")
-            self.buttonNext.configure(state=tk.ACTIVE)
-            if self.currentPage == len(self.booksChunks):
-                self.buttonNext.configure(state="disabled")
 
-            self.onePageBooksList(self.booksListFrame, self.booksChunks[self.currentPage - 1])
+            self.refreshScreen()
 
     def refreshScreen(self):
-        self.booksChunks = [self.books[x:x + 7] for x in range(0, len(self.books), 7)]
+
+        self.booksChunks = [self.books[x:x + self.booksMax()] for x in range(0, len(self.books), self.booksMax())]
         self.booksChunksLength = len(self.booksChunks)
+
+
 
         if self.booksChunksLength < self.currentPage:
             self.currentPage = self.booksChunksLength
@@ -121,6 +108,16 @@ class BookListGenerator(tk.Frame):
 
         self.bottomPageInfo = f"{self.currentPage}/{self.booksChunksLength}"
         self.bottomPageCounter(self.pageChangeButtonsFrame)
+
+        if self.currentPage == self.booksChunksLength:
+            self.buttonNext.configure(state=tk.DISABLED)
+        else:
+            self.buttonNext.configure(state=tk.ACTIVE)
+
+        if self.currentPage == 1:
+            self.buttonBack.configure(state=tk.DISABLED)
+        else:
+            self.buttonBack.configure(state=tk.ACTIVE)
     def bookActionFunction(self, bookId, actionName):
         cnx = connection.MySQLConnection(
             user=mysqlData["MYSQL_USER"], password=mysqlData["MYSQL_PASSWORD"],
@@ -192,15 +189,16 @@ class BookFrame(tk.Frame):
         if readingStatus == "finished":
             asyncio.run(self.getRating())
 
-        self.bookTitle = tk.Label(self, text=self.title)
-        self.deleteButton = tk.Button(self, text=actionsNames["delete"], background="red",
-                                      command= lambda: bookActionFunction(self.bookId, actionsNames["delete"]) )
-        self.actionButton = tk.Button(self, text=actionName, background=colors["lightgreen"], command=lambda: bookActionFunction(self.bookId, actionName))
+        self.bookTitle = tk.Label(self, text=self.title, background=colors["darkbeige"], fg="white", font=("Outfit", 12))
+        self.deleteButton = tk.Button(self, text=actionsNames["delete"], background=colors["red"], bd=0, fg="white",
+                                      command=lambda: bookActionFunction(self.bookId, actionsNames["delete"]) )
+        self.actionButton = tk.Button(self, text=actionName, background=colors["green"],
+                                      command=lambda: bookActionFunction(self.bookId, actionName), bd=0, fg="white")
 
         if self.rating != None:
             self.actionButton.configure(state="disabled")
             self.bookTitle.configure(text=f"{self.rating}/10 - {self.title}")
-        self.configure(height=40, background=colors["beige"])
+        self.configure(height=40, background=colors["darkbeige"])
 
         self.bookTitle.pack(side=tk.LEFT)
         self.deleteButton.pack(side=tk.RIGHT)
