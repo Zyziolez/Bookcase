@@ -11,9 +11,7 @@ class Frame1(tk.Frame):
         self.changeScreen = changeScreenFunction
         self.books = []
 
-
         self.grid(column=0, row=0, padx=25, pady=25, sticky="NSEW")
-
 
         self.upFrame = TopFrameComponent(self, changeScreenFunction, "Do przeczytania")
         vcmd = (self.register(self.validateEntry), '%P')
@@ -24,7 +22,7 @@ class Frame1(tk.Frame):
         self.inputFrame.columnconfigure(1, weight=1)
         self.inputFrame.rowconfigure(0, weight=1)
         self.entryInput = tk.Entry(self.inputFrame, validate="key", validatecommand=vcmd, bd=0)
-
+        self.entryInput.bind('<Return>', self.pressEnterEvent)
         self.submitButton = tk.Button(self.inputFrame, text="Dodaj", command=self.addNewBookButtonClick, background=colors["lightgreen"], fg="white", bd=0)
 
         self.entryInput.grid(row=0, column=0, sticky="NSEW")
@@ -80,12 +78,12 @@ class Frame1(tk.Frame):
             cnx.close()
 
     def validateEntry(self, P):
-        # if P ==
         if len(P) == 0:
             return True
         elif len(P) < 30:
             return True
         else:
             return False
-
+    def pressEnterEvent(self, event):
+        self.addNewBookButtonClick()
 
