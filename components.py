@@ -38,17 +38,17 @@ class BookListGenerator(tk.Frame):
         self.booksChunks = [self.books[x:x + self.booksMax()] for x in range(0, len(self.books), self.booksMax())]
         self.booksChunksLength = len(self.booksChunks)
 
-
+        self.pageChangeButtonsFrame = tk.Frame(parent, height=30, background=colors["beige"])
         if len(self.booksChunks) >= 1:
             self.onePageBooksList(self.booksListFrame, self.booksChunks[0])
-            self.bottomPageInfo = f"{self.currentPage}/{len(self.booksChunks)}"
+            self.pageString = tk.StringVar(self.pageChangeButtonsFrame, f"{self.currentPage}/{len(self.booksChunks)}")
         else:
             self.noBooksLabel = tk.Label(self.booksListFrame, text="no books")
-            self.bottomPageInfo = f"{self.currentPage}/{1}"
+            self.pageString = tk.StringVar(self.pageChangeButtonsFrame, f"{self.currentPage}/{1}")
             self.noBooksLabel.pack()
 
 
-        self.pageChangeButtonsFrame = tk.Frame(parent, height=30, background=colors["beige"])
+
         self.pageChangeButtonsFrame.pack(side=tk.BOTTOM, fill="x")
         self.bottomPageCounter(self.pageChangeButtonsFrame)
     def onePageBooksList(self, parent, onePageBookList):
@@ -62,7 +62,7 @@ class BookListGenerator(tk.Frame):
     def bottomPageCounter(self, parent):
 
         self.buttonBack = tk.Button(parent, text="<", state=tk.DISABLED, background=colors["beige"], command=self.changePageBack, bd=0, font=("Outfit", 12, "bold"))
-        pageLabel = tk.Label(parent, text=self.bottomPageInfo, background=colors["beige"], font=("Outfit", 12))
+        pageLabel = tk.Label(parent, textvariable=self.pageString, background=colors["beige"], font=("Outfit", 12))
         self.buttonNext = tk.Button(parent, text=">",  command=self.changePageNext, background=colors["beige"], bd=0, font=("Outfit", 12, "bold"))
 
         parent.columnconfigure(0, weight=1)
@@ -94,10 +94,7 @@ class BookListGenerator(tk.Frame):
         if self.booksChunksLength < self.currentPage:
             self.currentPage = self.booksChunksLength
 
-        # self.onePageFrame.destroy()
         for widget in self.booksListFrame.winfo_children():
-            widget.destroy()
-        for widget in self.pageChangeButtonsFrame.winfo_children():
             widget.destroy()
 
 
@@ -106,9 +103,7 @@ class BookListGenerator(tk.Frame):
         else:
             print("????")
 
-        self.bottomPageInfo = f"{self.currentPage}/{self.booksChunksLength}"
-        self.bottomPageCounter(self.pageChangeButtonsFrame)
-
+        self.pageString.set(f"{self.currentPage}/{self.booksChunksLength}")
         if self.currentPage == self.booksChunksLength:
             self.buttonNext.configure(state=tk.DISABLED)
         else:
