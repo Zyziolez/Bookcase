@@ -101,7 +101,7 @@ class BookListGenerator(tk.Frame):
         if len(self.booksChunks) > 0:
             self.onePageBooksList(self.booksListFrame, self.booksChunks[self.currentPage - 1])
         else:
-            print("????")
+            self.onePageBooksList(1, [])
 
         self.pageString.set(f"{self.currentPage}/{self.booksChunksLength}")
         if self.currentPage == self.booksChunksLength:
